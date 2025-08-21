@@ -5,6 +5,7 @@
 ## 🌟 特性
 
 - **Netlify Forms集成** - 无需后端代码，自动处理表单提交
+- **n8n Webhook集成** - 表单数据同时发送到n8n工作流
 - **响应式设计** - 适配桌面和移动设备
 - **现代化UI** - 使用Tailwind CSS构建的简洁美观界面
 - **本地存储** - 支持本地数据保存和查看
@@ -52,6 +53,18 @@ cd Videosurvey
 </form>
 ```
 
+### n8n Webhook 配置
+表单提交时会自动发送数据到n8n webhook：
+```javascript
+fetch('https://n8n.wendealai.com/webhook-test/survey', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+})
+```
+
 ## 🎨 自定义指南
 
 ### 1. 修改主题和标题
@@ -91,6 +104,7 @@ cd Videosurvey
 - **CSS3** - Tailwind CSS 框架
 - **JavaScript** - 原生JS，无依赖
 - **Netlify Forms** - 表单处理
+- **n8n Webhook** - 数据集成
 - **LocalStorage** - 本地数据存储
 
 ## 📊 数据管理
@@ -99,6 +113,11 @@ cd Videosurvey
 - 自动收集所有表单提交
 - 支持导出CSV格式
 - 实时通知功能
+
+### n8n 工作流
+- 表单数据实时发送到n8n webhook
+- 支持自定义数据处理和通知
+- 可配置自动化工作流
 
 ### 本地存储
 - 浏览器本地保存提交记录
