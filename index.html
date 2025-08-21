@@ -63,6 +63,32 @@
         .form-radio:focus, .form-checkbox:focus {
              box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.2);
         }
+        
+        /* 加载状态样式 */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .submit-button:disabled {
+            background-color: #ccc !important;
+            cursor: not-allowed;
+        }
+        
+        /* 加载动画 */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -96,7 +122,7 @@
         <div class="space-y-12">
             <!-- 主体内容：问卷表单 -->
             <main class="w-full">
-                <form id="survey-form" class="space-y-12" netlify>
+                <form id="survey-form" class="space-y-12" netlify action="/success.html">
                     <!-- Netlify Forms 隐藏字段 -->
                     <input type="hidden" name="form-name" value="survey-form" />
                     
@@ -241,8 +267,9 @@
                     
                     <!-- 提交按钮 -->
                     <div class="flex justify-end pt-6">
-                        <button type="submit" class="accent-bg text-white font-bold py-3 px-8 rounded-lg shadow-md hover:opacity-90 transition-opacity">
-                            提交问卷
+                        <button type="submit" class="accent-bg text-white font-bold py-3 px-8 rounded-lg shadow-md hover:opacity-90 transition-opacity submit-button">
+                            <span class="button-text">提交问卷</span>
+                            <span class="spinner hidden"></span>
                         </button>
                     </div>
                 </form>
@@ -364,7 +391,20 @@
 
             if (form) {
                 form.addEventListener('submit', function(event) {
-                    // 收集表单数据用于本地存储
+                    event.preventDefault(); // 阻止默认提交行为
+                    
+                    // 显示加载状态
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    const buttonText = submitButton.querySelector('.button-text');
+                    const spinner = submitButton.querySelector('.spinner');
+                    const originalText = buttonText.textContent;
+                    
+                    submitButton.disabled = true;
+                    buttonText.textContent = '提交中...';
+                    spinner.classList.remove('hidden');
+                    form.classList.add('loading');
+                    
+                    // 收集表单数据
                     const formData = new FormData(form);
                     const data = {};
                     
@@ -402,32 +442,54 @@
                     console.log(JSON.stringify(data, null, 2));
                     console.log("提交ID:", submissionId);
 
-                    // 发送到n8n webhook
-                    fetch('https://n8n.wendealai.com/webhook-test/survey', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
+                    // AJAX提交到Netlify Forms
+                    fetch("/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: new URLSearchParams(formData).toString()
                     })
                     .then(response => {
                         if (response.ok) {
-                            console.log('Webhook提交成功');
+                            console.log('Netlify Forms提交成功');
+                            
+                            // 发送到n8n webhook
+                            return fetch('https://n8n.wendealai.com/webhook-test/survey', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(data)
+                            });
                         } else {
-                            console.error('Webhook提交失败:', response.status);
+                            throw new Error('Netlify提交失败');
                         }
                     })
+                    .then(response => {
+                        if (response && response.ok) {
+                            console.log('Webhook提交成功');
+                        } else if (response) {
+                            console.error('Webhook提交失败:', response.status);
+                        }
+                        
+                        // 显示成功提示模态框
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                        }
+                        
+                        // 重置表单
+                        form.reset();
+                    })
                     .catch(error => {
-                        console.error('Webhook提交错误:', error);
+                        console.error('提交错误:', error);
+                        alert('提交失败，请稍后重试。数据已保存到本地。');
+                    })
+                    .finally(() => {
+                        // 恢复提交按钮状态
+                        submitButton.disabled = false;
+                        buttonText.textContent = originalText;
+                        spinner.classList.add('hidden');
+                        form.classList.remove('loading');
                     });
-
-                    // 显示成功提示模态框
-                    if (modal) {
-                        modal.classList.remove('hidden');
-                    }
-                    
-                    // 允许表单正常提交到Netlify
-                    // 不阻止默认行为，让Netlify处理表单提交
                 });
             }
 
