@@ -394,10 +394,32 @@
                     submissions.push(submissionData);
                     localStorage.setItem('survey_submissions', JSON.stringify(submissions));
 
+                    // 更新提交计数
+                    updateSubmissionsCount();
+
                     // 打印数据到控制台
                     console.log("问卷已提交，数据如下：");
                     console.log(JSON.stringify(data, null, 2));
                     console.log("提交ID:", submissionId);
+
+                    // 发送到n8n webhook
+                    fetch('https://n8n.wendealai.com/webhook-test/survey', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Webhook提交成功');
+                        } else {
+                            console.error('Webhook提交失败:', response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Webhook提交错误:', error);
+                    });
 
                     // 显示成功提示模态框
                     if (modal) {
