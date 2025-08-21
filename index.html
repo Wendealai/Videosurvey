@@ -319,30 +319,7 @@
         </div>
     </div>
 
-    <!-- 提交记录查看模态框 -->
-    <div id="submissions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">提交记录</h3>
-                <button id="close-submissions-modal" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div id="submissions-list" class="space-y-4">
-                <!-- 提交记录将在这里动态显示 -->
-            </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button id="export-submissions" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                    导出所有数据
-                </button>
-                <button id="clear-submissions" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
-                    清空记录
-                </button>
-            </div>
-        </div>
-    </div>
+
 
     <script>
         // 错误处理
@@ -510,117 +487,12 @@
                 });
             }
 
-            // 提交记录管理功能
-            const submissionsModal = document.getElementById('submissions-modal');
-            const closeSubmissionsModal = document.getElementById('close-submissions-modal');
-            const viewSubmissionsBtn = document.getElementById('view-submissions');
-            const submissionsList = document.getElementById('submissions-list');
-            const exportSubmissionsBtn = document.getElementById('export-submissions');
-            const clearSubmissionsBtn = document.getElementById('clear-submissions');
-            const localSubmissionsCount = document.getElementById('local-submissions');
-
-            // 检查元素是否存在
-            if (!submissionsModal || !closeSubmissionsModal || !viewSubmissionsBtn || 
-                !submissionsList || !exportSubmissionsBtn || !clearSubmissionsBtn || !localSubmissionsCount) {
-                console.error('某些元素未找到，可能是HTML结构问题');
-                return;
-            }
-
             // 更新提交数量显示
             function updateSubmissionsCount() {
+                // 记录到控制台
                 const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
-                localSubmissionsCount.textContent = submissions.length;
+                console.log('当前提交数量:', submissions.length);
             }
-
-            // 显示提交记录
-            function displaySubmissions() {
-                const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
-                submissionsList.innerHTML = '';
-
-                if (submissions.length === 0) {
-                    submissionsList.innerHTML = '<p class="text-gray-500 text-center py-8">暂无提交记录</p>';
-                    return;
-                }
-
-                submissions.reverse().forEach((submission, index) => {
-                    const submissionDiv = document.createElement('div');
-                    submissionDiv.className = 'bg-gray-50 p-4 rounded-lg border';
-                    
-                    const timestamp = new Date(submission.timestamp).toLocaleString('zh-CN');
-                    const contactName = submission.data.contact_name || '未填写';
-                    
-                    submissionDiv.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-semibold text-gray-800">提交 #${submissions.length - index}</h4>
-                            <span class="text-sm text-gray-500">${timestamp}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-2">联系人: ${contactName}</p>
-                        <button onclick="viewSubmissionDetails('${submission.id}')" class="text-blue-600 hover:text-blue-800 text-sm">
-                            查看详情
-                        </button>
-                    `;
-                    
-                    submissionsList.appendChild(submissionDiv);
-                });
-            }
-
-            // 查看提交详情
-            window.viewSubmissionDetails = function(submissionId) {
-                const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
-                const submission = submissions.find(s => s.id === submissionId);
-                
-                if (submission) {
-                    const details = JSON.stringify(submission.data, null, 2);
-                    alert(`提交详情:\n\n${details}`);
-                }
-            };
-
-            // 导出所有数据
-            exportSubmissionsBtn.addEventListener('click', function() {
-                const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
-                if (submissions.length === 0) {
-                    alert('暂无数据可导出');
-                    return;
-                }
-
-                const dataStr = JSON.stringify(submissions, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `survey_submissions_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            });
-
-            // 清空记录
-            clearSubmissionsBtn.addEventListener('click', function() {
-                if (confirm('确定要清空所有提交记录吗？此操作不可恢复。')) {
-                    localStorage.removeItem('survey_submissions');
-                    updateSubmissionsCount();
-                    displaySubmissions();
-                }
-            });
-
-            // 查看提交记录按钮
-            viewSubmissionsBtn.addEventListener('click', function() {
-                displaySubmissions();
-                submissionsModal.classList.remove('hidden');
-            });
-
-            // 关闭提交记录模态框
-            closeSubmissionsModal.addEventListener('click', function() {
-                submissionsModal.classList.add('hidden');
-            });
-
-            // 点击模态框外部区域关闭
-            submissionsModal.addEventListener('click', function(event) {
-                if (event.target === submissionsModal) {
-                    submissionsModal.classList.add('hidden');
-                }
-            });
 
             // 初始化显示提交数量
             updateSubmissionsCount();
